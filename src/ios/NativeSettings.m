@@ -257,7 +257,8 @@
 - (void)isBiometricsEnabled:(CDVInvokedUrlCommand*)command {
     LAContext *context = [[LAContext alloc] init];
     NSError *error = nil;
-
+    
+    // Add isBiometricsEnabled function to NativeSettings
     BOOL canEvaluate = [context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error];
 
     NSString *biometryType = @"none";
