@@ -258,10 +258,51 @@
     LAContext *context = [[LAContext alloc] init];
     NSError *error = nil;
 
-    // This returns YES if Touch ID or Face ID is enrolled and available
     BOOL canEvaluate = [context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error];
 
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:canEvaluate];
+    NSString *biometryType = @"none";
+
+    if (canEvaluate) {
+        if (@available(iOS 11.0, *)) {
+            switch (context.biometryType) {
+                case LABiometryTypeTouchID:
+                    biometryType = @"touchId";
+                    break;
+                case LABiometryTypeFaceID:
+                    biometryType = @"faceId";
+                    break;
+                default:
+                    biometryType = @"none";
+                    break;
+            }
+        }
+    } else {
+        // Log the reason for failure (very useful for debugging)
+        NSLog(@"Biometric check failed: %@", error.localizedDescription);
+
+        if (@available(iOS 11.0, *)) {
+            // Even if evaluation fails, we can still sometimes detect the type
+            switch (context.biometryType) {
+                case LABiometryTypeTouchID:
+                    biometryType = @"touchId";
+                    break;
+                case LABiometryTypeFaceID:
+                    biometryType = @"faceId";
+                    break;
+                default:
+                    biometryType = @"none";
+                    break;
+            }
+        }
+    }
+
+    // Return both values to JS
+    NSDictionary *result = @{
+        @"isAvailable": @(canEvaluate),
+        @"biometryType": biometryType
+    };
+
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
